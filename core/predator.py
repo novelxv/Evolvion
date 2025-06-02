@@ -1,27 +1,36 @@
-import pygame
-from core.agent_base import *
+import math
+from core.agent_base import BaseAgent
 
 class Predator(BaseAgent):
-    def __init__(self, x, y, config, environment):
-        super().__init__(x, y, config, environment, "predator", "red")
-    
+    def __init__(self, x: float, y: float, config: dict, environment):
+        super().__init__(x, y, config, environment, entity_class="predator", color_key="red")
+        self.q_table = {}
+        self.total_reward = 0.0
+
     def update(self):
-        return super().update()
-    
+        super().update()
+
     def handle_movement(self):
-        import math
-        vision = self.visionDetector()
-        if (len(vision) == 0):
+        visible = [agent for agent in self.visionDetector() if agent.entity_class == "prey" and agent.alive]
+        if not visible:
+            self.vel_x = 0
+            self.vel_y = 0
             return
-        
-        target = vision[-1] # the first agent to be spotted is locked as the target, hence the last element
+
+        target = visible[0]
+        min_dist = math.hypot(self.x - target.x, self.y - target.y)
+        for p in visible[1:]:
+            d = math.hypot(self.x - p.x, self.y - p.y)
+            if d < min_dist:
+                min_dist = d
+                target = p
 
         dx = target.x - self.x
         dy = target.y - self.y
-        distance = math.hypot(dx, dy)
-
-        if distance > 0:
-            dx /= distance
-            dy /= distance
-
+        if min_dist > 0:
+            dx /= min_dist
+            dy /= min_dist
         self.move_towards_point(dx, dy)
+
+    def learn(self, prey_list, rl_config):
+        pass

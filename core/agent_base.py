@@ -1,47 +1,49 @@
 import pygame
 import random
-from core.environment import Environment
-import sys
+from typing import List
 
 class BaseAgent:
-    def __init__(self, x, y, config, environment: Environment, entity_class, color):
+    def __init__(self, x: float, y: float, config: dict, environment, entity_class: str, color_key: str):
         self.x = x
         self.y = y
-        self.radius = 25
         self.config = config
         self.environment = environment
         self.entity_class = entity_class
-        self.color = color
+        self.color_key = color_key
+
+        self.radius = 6
         self.vision = random.uniform(*config["trait_range"]["vision"])
-        self.speed = 2
-        self.vel_x = 0
-        self.vel_y = 0
-    
+        self.speed = random.uniform(*config["trait_range"]["speed"])
+
+        self.alive = True
+        self.total_reward = 0.0
+        self.fitness = 0.0
+
+        self.vel_x = 0.0
+        self.vel_y = 0.0
+
     def update(self):
-        # Update position based on velocity
         self.x += self.vel_x
         self.y += self.vel_y
 
-        # Keep agent (circle) on screen
+        w, h = self.config["world_size"]
         if self.x < self.radius:
             self.x = self.radius
-        elif self.x > self.config["world_size"][0] - self.radius:
-            self.x = self.config["world_size"][0] - self.radius
+        elif self.x > w - self.radius:
+            self.x = w - self.radius
 
         if self.y < self.radius:
             self.y = self.radius
-        elif self.y > self.config["world_size"][1] - self.radius:
-            self.y = self.config["world_size"][1] - self.radius
+        elif self.y > h - self.radius:
+            self.y = h - self.radius
 
         self.collisionDetector()
         self.visionDetector()
 
     def handle_input(self, keys):
-        # Reset velocity
-        self.vel_x = 0
-        self.vel_y = 0
-        
-        # Still using key for movement
+        self.vel_x = 0.0
+        self.vel_y = 0.0
+
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.vel_x = -self.speed
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
@@ -52,30 +54,25 @@ class BaseAgent:
             self.vel_y = self.speed
 
     def handle_movement(self):
-        pass
-    # To be implemented in the child class
+        raise NotImplementedError("handle_movement() harus diimplementasikan di subclass")
 
-    def move_towards_point(self, dx, dy):
-        self.x += dx * self.speed
-        self.y += dy * self.speed
+    def move_towards_point(self, dx: float, dy: float):
+        self.vel_x = dx * self.speed
+        self.vel_y = dy * self.speed
 
-    def collisionDetector(self):
-        # returns an array of collided agents, other than the same tag
+    def collisionDetector(self) -> List["BaseAgent"]:
         return self.environment.collisionListener(self)
 
-    def visionDetector(self):
-        # returns an array of agents in vision radius
+    def visionDetector(self) -> List["BaseAgent"]:
         return self.environment.sightListener(self)
-    
+
     def draw(self, surface):
-        vision_radius = int(self.vision)
-        temp_surf = pygame.Surface((vision_radius * 2, vision_radius * 2), pygame.SRCALPHA)
+        vision_radius_px = int(self.vision * self.radius)
+        temp_surf = pygame.Surface((vision_radius_px * 2, vision_radius_px * 2), pygame.SRCALPHA)
 
-        # Draw the vision circle on the temp surface
-        pygame.draw.circle(temp_surf, self.config["transparent"], (int(self.x), int(self.y)), vision_radius * self.radius)
+        semi_transparent = (*self.config[self.color_key], 50)  # (R, G, B, alpha)
+        pygame.draw.circle(temp_surf, semi_transparent, (vision_radius_px, vision_radius_px), vision_radius_px)
 
-        # Blit temp surface onto main screen
-        surface.blit(temp_surf, (int(self.x - vision_radius), int(self.y - vision_radius)))
+        surface.blit(temp_surf, (int(self.x - vision_radius_px), int(self.y - vision_radius_px)))
 
-        # Draw the actual agent
-        pygame.draw.circle(surface, self.config[self.color], (int(self.x), int(self.y)), self.radius)
+        pygame.draw.circle(surface, self.config[self.color_key], (int(self.x), int(self.y)), self.radius)
