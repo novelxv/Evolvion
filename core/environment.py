@@ -10,7 +10,7 @@ class Environment:
     def collisionListener(self, agent):
         collisions = []
         for other in self.agents:
-            if other is agent or other.entity_class == "base_agent":
+            if other is agent or other.entity_class == agent.entity_class:
                 continue
             dx = agent.x - other.x
             dy = agent.y - other.y

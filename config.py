@@ -6,7 +6,7 @@ CONFIG = {
     "world_size": (800, 600),
     "white": (255, 255, 255),
     "blue": (0, 100, 255),
-    "red": (0, 100, 255),
+    "red": (255, 0, 0),
     "transparent": (255, 255, 255, 0),
     "time_steps_per_generation": 300,
 

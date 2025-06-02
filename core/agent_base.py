@@ -4,15 +4,16 @@ from core.environment import Environment
 import sys
 
 class BaseAgent:
-    def __init__(self, x, y, config, environment: Environment, entity_class):
+    def __init__(self, x, y, config, environment: Environment, entity_class, color):
         self.x = x
         self.y = y
         self.radius = 25
         self.config = config
         self.environment = environment
         self.entity_class = entity_class
+        self.color = color
         self.vision = random.uniform(*config["trait_range"]["vision"])
-        self.speed = 5 # set to 0 by default, 5 for debugging
+        self.speed = 2
         self.vel_x = 0
         self.vel_y = 0
     
@@ -51,26 +52,12 @@ class BaseAgent:
             self.vel_y = self.speed
 
     def handle_movement(self):
-        vision = self.visionDetector()
-        if (len(vision) == 0):
-            return
-        
-        target = vision[0]
-        self.move_towards_point(target.x, target.y)
+        pass
+    # To be implemented in the child class
 
-    def move_towards_point(self, target_x, target_y):
-        import math
-
-        dx = target_x - self.x
-        dy = target_y - self.y
-        distance = math.hypot(dx, dy)
-
-        if distance > 0:
-            dx /= distance
-            dy /= distance
-
-            self.x += dx * self.speed
-            self.y += dy * self.speed
+    def move_towards_point(self, dx, dy):
+        self.x += dx * self.speed
+        self.y += dy * self.speed
 
     def collisionDetector(self):
         # returns an array of collided agents, other than the same tag
@@ -85,10 +72,10 @@ class BaseAgent:
         temp_surf = pygame.Surface((vision_radius * 2, vision_radius * 2), pygame.SRCALPHA)
 
         # Draw the vision circle on the temp surface
-        pygame.draw.circle(temp_surf, self.config["blue"], (int(self.x), int(self.y)), vision_radius * self.radius)
+        pygame.draw.circle(temp_surf, self.config["transparent"], (int(self.x), int(self.y)), vision_radius * self.radius)
 
         # Blit temp surface onto main screen
         surface.blit(temp_surf, (int(self.x - vision_radius), int(self.y - vision_radius)))
 
         # Draw the actual agent
-        pygame.draw.circle(surface, self.config["blue"], (int(self.x), int(self.y)), self.radius)
+        pygame.draw.circle(surface, self.config[self.color], (int(self.x), int(self.y)), self.radius)
