@@ -1,58 +1,56 @@
-import pygame
-import sys
-from core.agent_base import BaseAgent
-from core.predator import Predator
-from core.prey import Prey
 from core.environment import Environment
+from core.prey import Prey
+from core.predator import Predator
+from logic.evolution import evolve_prey
+import random
 
-def run_simulation(config):
-    # Initialize pygame
-    pygame.init()
+def run_simulation(config: dict, logger_func, visualization_func):
+    env = Environment(config)
 
-    # Set up the display
-    try:
-        screen = pygame.display.set_mode((config["world_size"][0], config["world_size"][1]))
-        pygame.display.set_caption("Evolvion")
-        clock = pygame.time.Clock()
-        env = Environment()
+    for _ in range(config["num_prey"]):
+        x = random.uniform(0, config["world_size"][0])
+        y = random.uniform(0, config["world_size"][1])
+        p = Prey(x, y, config, env)
+        p.traits = {
+            "speed": random.uniform(*config["trait_range"]["speed"]),
+            "agility": random.uniform(*config["trait_range"]["agility"]),
+            "vision": random.uniform(*config["trait_range"]["vision"])
+        }
+        env.add_agent(p)
 
-        agent1 = Prey(config["world_size"][0] // 2 - 100, config["world_size"][0] // 2 - 50, config, env)
-        agent2 = Predator(config["world_size"][0] // 2, config["world_size"][0] // 2, config, env)
+    for _ in range(config["num_predators"]):
+        x = random.uniform(0, config["world_size"][0])
+        y = random.uniform(0, config["world_size"][1])
+        pr = Predator(x, y, config, env)
+        env.add_agent(pr)
 
-        env.add_agent(agent1)
-        env.add_agent(agent2)
-    except ValueError:
-        print("The configuration is invalid")
+    for gen in range(config["num_generations"]):
+        print(f"=== Generation {gen+1} ===")
+        env.reset_generation()
 
-    # Main game loop
-    running = True
-    while running:
-        # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        
-        # Get current key states
-        keys = pygame.key.get_pressed()
-        
-        # Update game objects
-        # agent2.handle_input(keys)
-        agent1.handle_movement()
-        agent2.handle_movement()
-        agent1.update()
-        agent2.update()
-        
-        # Draw everything
-        screen.fill(config["white"])
-        agent2.draw(screen)
-        agent1.draw(screen)
-        
-        # Update display
-        pygame.display.flip()
-        
-        # Control frame rate (60 FPS)
-        clock.tick(60)
+        for predator in env.predators:
+            predator.last_state = predator.rl_agent.get_state(predator, env.prey)
+            predator.last_action = random.choice(predator.rl_agent.actions)
 
-    # Quit
-    pygame.quit()
-    sys.exit()
+        for step in range(config["time_steps_per_generation"]):
+            for predator in env.predators:
+                predator.handle_movement()
+            for predator in env.predators:
+                predator.update()
+            for predator in env.predators:
+                predator.learn()
+
+            for prey in env.prey:
+                if prey.alive:
+                    prey.handle_movement()
+                    prey.update()
+
+            env.remove_dead_agents()
+
+            visualization_func(env, gen, step)
+
+        evolve_prey(env.prey, config)
+
+        logger_func(env, gen, config)
+
+    print("Simulation completed.")

@@ -3,20 +3,25 @@ from core.agent_base import BaseAgent
 from logic.rl import QLearningAgent
 
 class Predator(BaseAgent):
-    def __init__(self, x, y, config: dict, environment):
+    def __init__(self, x: float, y: float, config: dict, environment):
         super().__init__(x, y, config, environment, entity_class="predator", color_key="red")
         actions = ["up", "down", "left", "right", "stay"]
         rl_cfg = config["rl"]
-        self.rl_agent = QLearningAgent(actions, 
-                                       rl_cfg["learning_rate"], 
-                                       rl_cfg["discount_factor"], 
-                                       rl_cfg["epsilon"])
+        self.rl_agent = QLearningAgent(actions,
+                                       rl_cfg["learning_rate"],
+                                       rl_cfg["discount_factor"],
+                                       rl_cfg["epsilon"],
+                                       config)
         self.total_reward = 0.0
+        self.last_state = None
+        self.last_action = None
 
     def decide_action(self):
         state = self.rl_agent.get_state(self, self.environment.prey)
         action = self.rl_agent.choose_action(state)
-        return state, action
+        self.last_state = state
+        self.last_action = action
+        return action
 
     def execute_action(self, action):
         if action == "up":
@@ -34,15 +39,16 @@ class Predator(BaseAgent):
     def handle_movement(self):
         state = self.rl_agent.get_state(self, self.environment.prey)
         if state in self.rl_agent.q_table:
-            _, action = self.decide_action()
+            action = self.decide_action()
             self.execute_action(action)
         else:
-            visible = [ag for ag in self.visionDetector() 
+            visible = [ag for ag in self.visionDetector()
                        if ag.entity_class == "prey" and ag.alive]
             if not visible:
                 self.vel_x = 0
                 self.vel_y = 0
                 return
+
             target = visible[0]
             min_dist = math.hypot(self.x - target.x, self.y - target.y)
             for p in visible[1:]:
@@ -57,24 +63,22 @@ class Predator(BaseAgent):
                 dy /= min_dist
             self.move_towards_point(dx, dy)
 
-    def learn(self, prey_list):
-        collided = self.collisionDetector()
+    def learn(self):
         reward = 0.0
+        collided = self.collisionDetector()
         if collided:
             for p in collided:
                 if p.entity_class == "prey" and p.alive:
                     p.alive = False
                     reward += 1.0
-        else:
-            reward -= 0.01
 
-        state = self.rl_agent.get_state(self, prey_list)
-        next_state = state
+        reward -= 0.01
 
-        action = getattr(self, "last_action", "stay")
+        next_state = self.rl_agent.get_state(self, self.environment.prey)
 
-        self.rl_agent.update_q(state, action, reward, next_state)
-
-        self.last_action = action
+        if self.last_state is not None and self.last_action is not None:
+            self.rl_agent.update_q(self.last_state, self.last_action, reward, next_state)
 
         self.total_reward += reward
+
+        self.last_state = next_state
