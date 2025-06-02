@@ -4,6 +4,10 @@ CONFIG = {
     "num_prey": 20,
     "num_predators": 5,
     "world_size": (800, 600),
+    "white": (255, 255, 255),
+    "blue": (0, 100, 255),
+    "red": (0, 100, 255),
+    "transparent": (255, 255, 255, 0),
     "time_steps_per_generation": 300,
 
     # Prey trait ranges
