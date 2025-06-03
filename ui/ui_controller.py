@@ -6,8 +6,6 @@ class UIController:
     def __init__(self, config: dict):
         self.config = config
         self.sidebar_width = 300
-        self.control_height = 120
-        self.stats_height = 200
         
         # UI State
         self.is_paused = False
@@ -50,13 +48,12 @@ class UIController:
         self.sliders["num_prey"] = Slider(20, 480, 200, 20, 10, 100, self.config["num_prey"])
         self.sliders["num_predators"] = Slider(20, 520, 200, 20, 1, 20, self.config["num_predators"])
         
-        # Buttons
-        self.buttons["play_pause"] = Button(20, 580, 80, 40, "▶ Play", self._toggle_pause)
-        self.buttons["reset"] = Button(110, 580, 80, 40, "Reset", self._reset_simulation)
-        self.buttons["save"] = Button(200, 580, 80, 40, "Save", self._save_config)
-        self.buttons["toggle_vision"] = Button(20, 630, 120, 30, "Hide Vision", self._toggle_vision)
-        self.buttons["speed_up"] = Button(150, 630, 40, 30, "2x", self._speed_up)
-        self.buttons["speed_down"] = Button(200, 630, 40, 30, "1x", self._speed_down)
+        self.buttons["play_pause"] = Button(20, 560, 80, 30, "Play", self._toggle_pause)
+        self.buttons["reset"] = Button(110, 560, 60, 30, "Reset", self._reset_simulation)
+        self.buttons["save"] = Button(180, 560, 60, 30, "Save", self._save_config)
+        self.buttons["toggle_vision"] = Button(20, 600, 100, 25, "Hide Vision", self._toggle_vision)
+        self.buttons["speed_up"] = Button(130, 600, 50, 25, "2x", self._speed_up)
+        self.buttons["speed_down"] = Button(190, 600, 50, 25, "1x", self._speed_down)
     
     def handle_event(self, event):
         """Handle pygame events"""
@@ -150,13 +147,15 @@ class UIController:
     
     def render(self, screen):
         """Render all UI elements"""
-        self._draw_sidebar(screen)
-        self._draw_stats_panel(screen)
+        screen_height = screen.get_height()
+        
+        self._draw_sidebar(screen, screen_height)
+        self._draw_stats_panel(screen, screen_height)
     
-    def _draw_sidebar(self, screen):
+    def _draw_sidebar(self, screen, screen_height):
         """Draw control sidebar"""
         # Sidebar background
-        sidebar_rect = pygame.Rect(0, 0, self.sidebar_width, screen.get_height())
+        sidebar_rect = pygame.Rect(0, 0, self.sidebar_width, screen_height)
         pygame.draw.rect(screen, (45, 45, 55), sidebar_rect)
         
         font_title = pygame.font.Font(None, 28)
@@ -188,7 +187,7 @@ class UIController:
         self._draw_labeled_slider(screen, "Vision", self.sliders["predator_vision"], font_small)
         
         # Simulation Parameters
-        sim_title = font_label.render("⚙️ SIMULATION", True, (100, 255, 100))
+        sim_title = font_label.render("SIMULATION", True, (100, 255, 100))
         screen.blit(sim_title, (20, 410))
         
         self._draw_labeled_slider(screen, "Mutation Rate", self.sliders["mutation_rate"], font_small)
@@ -200,7 +199,7 @@ class UIController:
             button.draw(screen)
         
         # Keyboard shortcuts info
-        shortcuts_y = 680
+        shortcuts_y = max(650, screen_height - 140)
         shortcuts_title = font_small.render("KEYBOARD SHORTCUTS:", True, (200, 200, 200))
         screen.blit(shortcuts_title, (20, shortcuts_y))
         
@@ -212,8 +211,9 @@ class UIController:
         ]
         
         for i, shortcut in enumerate(shortcuts):
-            shortcut_surf = font_small.render(shortcut, True, (150, 150, 150))
-            screen.blit(shortcut_surf, (20, shortcuts_y + 20 + i * 16))
+            if shortcuts_y + 20 + i * 16 < screen_height - 10:
+                shortcut_surf = font_small.render(shortcut, True, (150, 150, 150))
+                screen.blit(shortcut_surf, (20, shortcuts_y + 20 + i * 16))
     
     def _draw_labeled_slider(self, screen, label, slider, font):
         """Draw slider with label and value"""
@@ -229,44 +229,45 @@ class UIController:
         # Slider
         slider.draw(screen)
     
-    def _draw_stats_panel(self, screen):
+    def _draw_stats_panel(self, screen, screen_height):
         """Draw statistics panel"""
-        stats_y = screen.get_height() - self.stats_height - 20
-        stats_rect = pygame.Rect(10, stats_y, self.sidebar_width - 20, self.stats_height)
+        stats_height = 160
+        stats_y = max(screen_height - 300, 630)
+        
+        stats_rect = pygame.Rect(10, stats_y, self.sidebar_width - 20, stats_height)
         pygame.draw.rect(screen, (35, 35, 45), stats_rect)
         pygame.draw.rect(screen, (100, 100, 120), stats_rect, 2)
         
-        font_title = pygame.font.Font(None, 24)
-        font_stat = pygame.font.Font(None, 18)
+        font_title = pygame.font.Font(None, 22)
+        font_stat = pygame.font.Font(None, 16)
         
         # Title
         title = font_title.render("LIVE STATISTICS", True, (255, 255, 255))
         screen.blit(title, (20, stats_y + 10))
         
-        y = stats_y + 40
+        y = stats_y + 35
         stats_text = [
-            f"Generation: {self.current_stats['generation'] + 1}",
-            f"Step: {self.current_stats['step'] + 1}",
-            f"Prey Alive: {self.current_stats['alive_prey']}/{self.current_stats.get('total_prey', 0)}",
-            f"Avg Fitness: {self.current_stats['avg_fitness']:.1f}",
-            f"Avg Reward: {self.current_stats['avg_reward']:.2f}",
+            f"Gen: {self.current_stats['generation'] + 1} | Step: {self.current_stats['step'] + 1}",
+            f"Prey: {self.current_stats['alive_prey']}/{self.current_stats.get('total_prey', 0)}",
+            f"Fitness: {self.current_stats['avg_fitness']:.1f}",
+            f"Reward: {self.current_stats['avg_reward']:.2f}",
             f"Speed: {self.simulation_speed:.1f}x",
-            f"Status: {'⏸ PAUSED' if self.is_paused else '▶ RUNNING'}"
+            f"{'⏸ PAUSED' if self.is_paused else '▶ RUNNING'}"
         ]
         
         colors = [
-            (200, 200, 200),  # Generation
-            (200, 200, 200),  # Step
+            (200, 200, 200),  # Generation/Step
             (100, 150, 255),  # Prey alive
             (100, 255, 100),  # Fitness
             (255, 100, 100),  # Reward
             (255, 255, 100),  # Speed
-            (255, 255, 100) if "PAUSED" in stats_text[6] else (100, 255, 100)  # Status
+            (255, 255, 100) if self.is_paused else (100, 255, 100)  # Status
         ]
         
         for i, (text, color) in enumerate(zip(stats_text, colors)):
-            surf = font_stat.render(text, True, color)
-            screen.blit(surf, (20, y + i * 22))
+            if y + i * 20 < stats_y + stats_height - 10:
+                surf = font_stat.render(text, True, color)
+                screen.blit(surf, (20, y + i * 20))
 
 
 class Slider:
@@ -333,7 +334,7 @@ class Button:
         pygame.draw.rect(screen, (100, 150, 255), self.rect, 2)
         
         # Button text
-        font = pygame.font.Font(None, 16)
+        font = pygame.font.Font(None, 14)
         text_surf = font.render(self.text, True, (255, 255, 255))
         text_rect = text_surf.get_rect(center=self.rect.center)
         screen.blit(text_surf, text_rect)

@@ -11,15 +11,15 @@ def main():
     
     # Get screen info for optimal sizing
     info = pygame.display.Info()
-    max_width = info.current_w - 100
-    max_height = info.current_h - 100
     
-    # Use larger size but within screen bounds
-    width = min(CONFIG["world_size"][0], max_width)
-    height = min(CONFIG["world_size"][1], max_height)
+    width = int(info.current_w * 0.9)
+    height = int(info.current_h * 0.9)
     
-    screen = pygame.display.set_mode((width, height))
-    pygame.display.set_caption("🧬 EVOLVION - Advanced Evolution Simulator")
+    CONFIG["world_size"] = (width, height)
+    
+    # Create window with proper flags
+    screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+    pygame.display.set_caption("🧬 EVOLVION - Predator vs Prey Evolution Simulation")
     
     # Set window icon
     icon = pygame.Surface((32, 32))
@@ -31,8 +31,9 @@ def main():
 
     def custom_logger(env, gen, config):
         log_generation(env, gen, config)
-        avg_reward = sum(pr.total_reward for pr in env.predators) / len(env.predators)
-        reward_history.append(avg_reward)
+        if env.predators:
+            avg_reward = sum(pr.total_reward for pr in env.predators) / len(env.predators)
+            reward_history.append(avg_reward)
         prey_data = [{"traits": p.traits} for p in env.prey]
         plot_trait_distribution(prey_data, gen, config)
 
