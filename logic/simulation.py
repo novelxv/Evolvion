@@ -57,6 +57,12 @@ def run_simulation(config: dict, logger_func, visualization_func):
 
         evolve_prey(env.prey, config)
 
+        env.agents.clear()
+        for p in env.prey:
+            env.agents.append(p)
+        for pr in env.predators:
+            env.agents.append(pr)
+
         logger_func(env, gen, config)
 
         labels, centroids = cluster_prey_traits(env.prey, config["k_clusters"])
