@@ -42,51 +42,54 @@ class Predator(BaseAgent):
         self.move_towards_point(dx, dy)
 
     def handle_movement(self):
-        state = self.rl_agent.get_state(self, self.environment.prey)
-        visible = [ag for ag in self.visionDetector()
-                       if ag.entity_class == "prey" and ag.alive]
-        epsilon = 5
-        now = pygame.time.get_ticks()
+        # See which prey are in vision
+        visible_prey = [
+            agent for agent in self.visionDetector()
+            if agent.entity_class == "prey" and agent.alive
+        ]
 
-        if state in self.rl_agent.q_table:
-            action = self.decide_action()
-            self.execute_action(action)
-            return
-
-        if not visible:
-            target_x, target_y = self.random_target
-
-            dx = target_x - self.x
-            dy = target_y - self.y
+        if visible_prey:
+            # --- CHASE MODE ---
+            # Find the closest prey
+            target = min(
+                visible_prey,
+                key=lambda p: math.hypot(self.x - p.x, self.y - p.y)
+            )
+            dx = target.x - self.x
+            dy = target.y - self.y
             distance = math.hypot(dx, dy)
-
-            if distance < epsilon:
-                self.x = target_x
-                self.y = target_y
-                self.random_target = self.random_pos()
-                self.idle_until = now + 3000
-
-            if distance == 0:
+            if distance > 0:
+                dx /= distance
+                dy /= distance
+                self.move_towards_point(dx, dy)
+                return
+            else:
+                # If on top of prey, stop moving (capture occurs in learn())
+                self.vel_x = 0
+                self.vel_y = 0
                 return
 
-            dx /= distance
-            dy /= distance
+        # If no visible prey → WANDER MODE
+        epsilon = 5
+        tx, ty = self.random_target
+        dx = tx - self.x
+        dy = ty - self.y
+        dist = math.hypot(dx, dy)
 
-            self.move_towards_point(dx, dy)
+        if dist < epsilon:
+            self.random_target = self.random_pos()
+            self.idle_until = pygame.time.get_ticks() + 2000  # idle for 2 seconds
+            self.vel_x = 0
+            self.vel_y = 0
             return
-        
-        target = visible[-1]
-        min_dist = math.hypot(self.x - target.x, self.y - target.y)
-        for p in visible[1:]:
-            d = math.hypot(self.x - p.x, self.y - p.y)
-            if d < min_dist:
-                min_dist = d
-                target = p
-        dx = target.x - self.x
-        dy = target.y - self.y
-        if min_dist > 0:
-            dx /= min_dist
-            dy /= min_dist
+
+        if pygame.time.get_ticks() < self.idle_until:
+            self.vel_x = 0
+            self.vel_y = 0
+            return
+
+        dx /= dist
+        dy /= dist
         self.move_towards_point(dx, dy)
 
     def learn(self):

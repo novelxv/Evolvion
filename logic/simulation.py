@@ -40,15 +40,12 @@ def run_simulation(config: dict, logger_func, visualization_func):
             predator.total_reward = 0.0
 
         for step in range(config["time_steps_per_generation"]):
-            # Call visualization and check if should continue
             should_continue = visualization_func(env, gen, step)
             
-            # If paused, keep calling visualization but don't update simulation
             while should_continue is False:
-                time.sleep(0.1)  # Don't consume too much CPU while paused
+                time.sleep(0.1) 
                 should_continue = visualization_func(env, gen, step)
             
-            # Update simulation only if not paused
             for predator in env.predators:
                 predator.handle_movement()
             for predator in env.predators:
@@ -65,7 +62,28 @@ def run_simulation(config: dict, logger_func, visualization_func):
 
         evolve_prey(env.prey, config)
 
-        env.agents.clear()
+        new_prey_list = []
+        for _ in range(config["num_prey"]):
+            if len(env.prey) > config["num_prey"]:
+                new_prey_list = env.prey[:config["num_prey"]]
+            else:
+                new_prey_list = env.prey.copy()
+                while len(new_prey_list) < config["num_prey"]:
+                    x = random.uniform(0, config["world_size"][0])
+                    y = random.uniform(0, config["world_size"][1])
+                    p = Prey(x, y, config, env)
+                    p.traits = {
+                        "speed": random.uniform(*config["trait_range"]["speed"]),
+                        "agility": random.uniform(*config["trait_range"]["agility"]),
+                        "vision": random.uniform(*config["trait_range"]["vision"])
+                    }
+                    new_prey_list.append(p)
+            for child in new_prey_list:
+                child.alive = True
+                child.fitness = 0.0
+        env.prey = new_prey_list
+
+        env.agents = []
         for p in env.prey:
             env.agents.append(p)
         for pr in env.predators:

@@ -8,7 +8,7 @@ CONFIG = {
     "blue": (0, 100, 255),
     "red": (255, 0, 0),
     "transparent": (255, 255, 255, 0),
-    "time_steps_per_generation": 200,
+    "time_steps_per_generation": 500,
 
     # Prey trait ranges
     "trait_range": {
