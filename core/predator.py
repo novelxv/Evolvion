@@ -97,7 +97,7 @@ class Predator(BaseAgent):
             for p in collided:
                 if p.entity_class == "prey" and p.alive:
                     p.alive = False
-                    reward += 2.0
+                    reward += 5.0
 
         reward -= 0.001
 

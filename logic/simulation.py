@@ -5,6 +5,7 @@ from logic.evolution import evolve_prey
 from analysis.clustering import cluster_prey_traits
 from analysis.visualization import plot_cluster_centroids
 import random
+import time
 
 def run_simulation(config: dict, logger_func, visualization_func):
     env = Environment(config)
@@ -39,6 +40,15 @@ def run_simulation(config: dict, logger_func, visualization_func):
             predator.total_reward = 0.0
 
         for step in range(config["time_steps_per_generation"]):
+            # Call visualization and check if should continue
+            should_continue = visualization_func(env, gen, step)
+            
+            # If paused, keep calling visualization but don't update simulation
+            while should_continue is False:
+                time.sleep(0.1)  # Don't consume too much CPU while paused
+                should_continue = visualization_func(env, gen, step)
+            
+            # Update simulation only if not paused
             for predator in env.predators:
                 predator.handle_movement()
             for predator in env.predators:
@@ -53,8 +63,6 @@ def run_simulation(config: dict, logger_func, visualization_func):
 
             env.remove_dead_agents()
 
-            visualization_func(env, gen, step)
-
         evolve_prey(env.prey, config)
 
         env.agents.clear()
@@ -68,16 +76,12 @@ def run_simulation(config: dict, logger_func, visualization_func):
         labels, centroids = cluster_prey_traits(env.prey, config["k_clusters"])
         plot_cluster_centroids(centroids, gen, config)
 
-        # for p in env.prey:
-        #     p.x = random.uniform(0, config["world_size"][0])
-        #     p.y = random.uniform(0, config["world_size"][1])
-
     print("Simulation completed.")
 
 
 def debug_simulation(config: dict):
     import pygame
-    # Initialize pygameMore actions
+    # Initialize pygame
     pygame.init()
 
     # Set up the display
@@ -107,8 +111,6 @@ def debug_simulation(config: dict):
         keys = pygame.key.get_pressed()
 
         # Update game objects
-        # agent2.handle_input(keys)
-        # agent2.handle_input(keys)
         agent1.handle_movement()
         agent2.update()
         agent2.handle_movement()

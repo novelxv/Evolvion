@@ -1,9 +1,9 @@
 CONFIG = {
     # General simulation settings
-    "num_generations": 20,
+    "num_generations": 15,
     "num_prey": 20,
     "num_predators": 5,
-    "world_size": (800, 600),
+    "world_size": (1200, 800),
     "white": (255, 255, 255),
     "blue": (0, 100, 255),
     "red": (255, 0, 0),
