@@ -1,15 +1,10 @@
 import matplotlib.pyplot as plt
 import os
 
-def plot_reward_curve(env_list, config: dict):
-    rewards = []
-    for env in env_list:
-        avg_reward = sum(p.total_reward for p in env.predators) / len(env.predators)
-        rewards.append(avg_reward)
-
+def plot_reward_curve(reward_history, config):
     os.makedirs(config["plot_dir"], exist_ok=True)
     plt.figure()
-    plt.plot(range(1, len(rewards) + 1), rewards, marker="o")
+    plt.plot(range(1, len(reward_history) + 1), reward_history, marker="o")
     plt.title("Average Predator Reward per Generation")
     plt.xlabel("Generation")
     plt.ylabel("Average Reward")

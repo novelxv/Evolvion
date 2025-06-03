@@ -20,8 +20,8 @@ class Prey(BaseAgent):
         now = pygame.time.get_ticks()
         epsilon = 5
 
-        if now < self.idle_until and not visible:
-            return
+        # if now < self.idle_until and not visible:
+        #     return
 
         if not visible:
             target_x, target_y = self.random_target
@@ -30,14 +30,19 @@ class Prey(BaseAgent):
             dy = target_y - self.y
             distance = math.hypot(dx, dy)
 
-            if distance == 0:
-                return
 
             if distance < epsilon:
-                self.x = target_x
-                self.y = target_y
+                self.x, self.y = target_x, target_y
                 self.random_target = self.random_pos()
                 self.idle_until = now + 3000
+                return
+
+            dx = target_x - self.x
+            dy = target_y - self.y
+            distance = math.hypot(dx, dy)
+
+            if distance == 0:
+                return
 
             dx /= distance
             dy /= distance

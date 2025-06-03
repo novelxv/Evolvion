@@ -43,50 +43,51 @@ class Predator(BaseAgent):
 
     def handle_movement(self):
         state = self.rl_agent.get_state(self, self.environment.prey)
+        visible = [ag for ag in self.visionDetector()
+                       if ag.entity_class == "prey" and ag.alive]
+        epsilon = 5
+        now = pygame.time.get_ticks()
+
         if state in self.rl_agent.q_table:
             action = self.decide_action()
             self.execute_action(action)
-        else:
-            visible = [ag for ag in self.visionDetector()
-                       if ag.entity_class == "prey" and ag.alive]
-            now = pygame.time.get_ticks()
-            epsilon = 5 
+            return
 
-            if now < self.idle_until and not visible:
+        if not visible:
+            target_x, target_y = self.random_target
+
+            dx = target_x - self.x
+            dy = target_y - self.y
+            distance = math.hypot(dx, dy)
+
+            if distance < epsilon:
+                self.x = target_x
+                self.y = target_y
+                self.random_target = self.random_pos()
+                self.idle_until = now + 3000
+
+            if distance == 0:
                 return
 
-            if not visible:
-                target_x, target_y = self.random_target
+            dx /= distance
+            dy /= distance
 
-                dx = target_x - self.x
-                dy = target_y - self.y
-                distance = math.hypot(dx, dy)
-
-                if distance < epsilon:
-                    self.x = target_x
-                    self.y = target_y
-                    self.random_target = self.random_pos()
-                    self.idle_until = now + 3000
-
-                dx /= distance
-                dy /= distance
-
-                self.move_towards_point(dx, dy)
-                return
-
-            target = visible[-1]
-            min_dist = math.hypot(self.x - target.x, self.y - target.y)
-            for p in visible[1:]:
-                d = math.hypot(self.x - p.x, self.y - p.y)
-                if d < min_dist:
-                    min_dist = d
-                    target = p
-            dx = target.x - self.x
-            dy = target.y - self.y
-            if min_dist > 0:
-                dx /= min_dist
-                dy /= min_dist
             self.move_towards_point(dx, dy)
+            return
+        
+        target = visible[-1]
+        min_dist = math.hypot(self.x - target.x, self.y - target.y)
+        for p in visible[1:]:
+            d = math.hypot(self.x - p.x, self.y - p.y)
+            if d < min_dist:
+                min_dist = d
+                target = p
+        dx = target.x - self.x
+        dy = target.y - self.y
+        if min_dist > 0:
+            dx /= min_dist
+            dy /= min_dist
+        self.move_towards_point(dx, dy)
 
     def learn(self):
         reward = 0.0

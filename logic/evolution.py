@@ -42,3 +42,7 @@ def evolve_prey(prey_list: list, config: dict):
         new_generation.append(child)
 
     prey_list[:] = new_generation
+    
+    for child in prey_list:
+        child.x = random.uniform(0, config["world_size"][0])
+        child.y = random.uniform(0, config["world_size"][1])
