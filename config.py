@@ -1,6 +1,6 @@
 CONFIG = {
     # General simulation settings
-    "num_generations": 15,
+    "num_generations": 8,
     "num_prey": 20,
     "num_predators": 5,
     "world_size": (1200, 800),
@@ -8,7 +8,7 @@ CONFIG = {
     "blue": (0, 100, 255),
     "red": (255, 0, 0),
     "transparent": (255, 255, 255, 0),
-    "time_steps_per_generation": 500,
+    "time_steps_per_generation": 300,
 
     # Prey trait ranges
     "trait_range": {

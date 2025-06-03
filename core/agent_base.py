@@ -11,7 +11,7 @@ class BaseAgent:
         self.entity_class = entity_class
         self.color_key = color_key
 
-        self.radius = 6
+        self.radius = 8
         self.vision = random.uniform(*config["trait_range"]["vision"])
         self.speed = random.uniform(*config["trait_range"]["speed"])
 

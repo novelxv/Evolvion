@@ -23,8 +23,8 @@ def run_simulation(config: dict, logger_func, visualization_func):
         env.add_agent(p)
 
     for _ in range(config["num_predators"]):
-        x = center_x
-        y = center_y
+        x = random.uniform(center_x - 200, center_x + 200)
+        y = random.uniform(center_y - 200, center_y + 200)
         pr = Predator(x, y, config, env)
         env.add_agent(pr)
 
