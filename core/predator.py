@@ -15,6 +15,8 @@ class Predator(BaseAgent):
         self.total_reward = 0.0
         self.last_state = None
         self.last_action = None
+        self.speed = config.get("predator_speed", 4.0)
+        self.vision = config.get("predator_vision", 20.0)
 
     def decide_action(self):
         state = self.rl_agent.get_state(self, self.environment.prey)
@@ -67,12 +69,13 @@ class Predator(BaseAgent):
         reward = 0.0
         collided = self.collisionDetector()
         if collided:
+            print(f"Predator at ({self.x:.1f},{self.y:.1f}) collided with {[ (p.x,p.y) for p in collided ]}")
             for p in collided:
                 if p.entity_class == "prey" and p.alive:
                     p.alive = False
-                    reward += 1.0
+                    reward += 2.0
 
-        reward -= 0.01
+        reward -= 0.001
 
         next_state = self.rl_agent.get_state(self, self.environment.prey)
 

@@ -7,9 +7,10 @@ import random
 def run_simulation(config: dict, logger_func, visualization_func):
     env = Environment(config)
 
+    center_x, center_y = config["world_size"][0] / 2, config["world_size"][1] / 2
     for _ in range(config["num_prey"]):
-        x = random.uniform(0, config["world_size"][0])
-        y = random.uniform(0, config["world_size"][1])
+        x = random.uniform(center_x - 100, center_x + 100)
+        y = random.uniform(center_y - 100, center_y + 100)
         p = Prey(x, y, config, env)
         p.traits = {
             "speed": random.uniform(*config["trait_range"]["speed"]),
@@ -19,8 +20,8 @@ def run_simulation(config: dict, logger_func, visualization_func):
         env.add_agent(p)
 
     for _ in range(config["num_predators"]):
-        x = random.uniform(0, config["world_size"][0])
-        y = random.uniform(0, config["world_size"][1])
+        x = center_x
+        y = center_y
         pr = Predator(x, y, config, env)
         env.add_agent(pr)
 
@@ -47,10 +48,14 @@ def run_simulation(config: dict, logger_func, visualization_func):
 
             env.remove_dead_agents()
 
-            visualization_func(env, gen, step)
+            # visualization_func(env, gen, step)
 
         evolve_prey(env.prey, config)
 
         logger_func(env, gen, config)
+
+        for p in env.prey:
+            p.x = random.uniform(0, config["world_size"][0])
+            p.y = random.uniform(0, config["world_size"][1])
 
     print("Simulation completed.")

@@ -8,7 +8,7 @@ CONFIG = {
     "blue": (0, 100, 255),
     "red": (255, 0, 0),
     "transparent": (255, 255, 255, 0),
-    "time_steps_per_generation": 300,
+    "time_steps_per_generation": 200,
 
     # Prey trait ranges
     "trait_range": {
@@ -17,15 +17,19 @@ CONFIG = {
         "vision": (2.0, 5.0),
     },
 
+    # Predator trait ranges
+    "predator_speed": 10.0,
+    "predator_vision": 20.0,
+
     # Genetic Algorithm settings
-    "mutation_rate": 0.1,
-    "crossover_rate": 0.7,
+    "mutation_rate": 0.05,
+    "crossover_rate": 0.6,
 
     # Reinforcement Learning settings
     "rl": {
-        "learning_rate": 0.1,
+        "learning_rate": 0.2,
         "discount_factor": 0.9,
-        "epsilon": 0.1,
+        "epsilon": 0.4,
     },
 
     # Clustering settings
