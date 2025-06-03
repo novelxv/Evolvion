@@ -1,10 +1,13 @@
-import math
+import math, pygame
 from core.agent_base import BaseAgent
 from logic.rl import QLearningAgent
 
 class Predator(BaseAgent):
     def __init__(self, x: float, y: float, config: dict, environment):
         super().__init__(x, y, config, environment, entity_class="predator", color_key="red")
+        self.last_random_time = pygame.time.get_ticks()
+        self.random_target = (x, y)
+        self.idle_until = 0
         actions = ["up", "down", "left", "right", "stay"]
         rl_cfg = config["rl"]
         self.rl_agent = QLearningAgent(actions,
@@ -46,12 +49,32 @@ class Predator(BaseAgent):
         else:
             visible = [ag for ag in self.visionDetector()
                        if ag.entity_class == "prey" and ag.alive]
-            if not visible:
-                self.vel_x = 0
-                self.vel_y = 0
+            now = pygame.time.get_ticks()
+            epsilon = 5 
+
+            if now < self.idle_until and not visible:
                 return
 
-            target = visible[0]
+            if not visible:
+                target_x, target_y = self.random_target
+
+                dx = target_x - self.x
+                dy = target_y - self.y
+                distance = math.hypot(dx, dy)
+
+                if distance < epsilon:
+                    self.x = target_x
+                    self.y = target_y
+                    self.random_target = self.random_pos()
+                    self.idle_until = now + 3000
+
+                dx /= distance
+                dy /= distance
+
+                self.move_towards_point(dx, dy)
+                return
+
+            target = visible[-1]
             min_dist = math.hypot(self.x - target.x, self.y - target.y)
             for p in visible[1:]:
                 d = math.hypot(self.x - p.x, self.y - p.y)

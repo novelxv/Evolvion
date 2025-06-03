@@ -55,6 +55,20 @@ class BaseAgent:
 
     def handle_movement(self):
         raise NotImplementedError("handle_movement() harus diimplementasikan di subclass")
+    
+    def random_pos(self):
+        import random
+
+        range_ = self.vision * self.radius
+        world_width, world_height = self.config["world_size"]
+
+        new_x = random.uniform(self.x - range_, self.x + range_ * 2)
+        new_y = random.uniform(self.y - range_ * 2, self.y + range_ * 2)
+
+        new_x = max(self.radius, min(new_x, world_width - self.radius))
+        new_y = max(self.radius, min(new_y, world_height - self.radius))
+
+        return new_x, new_y
 
     def move_towards_point(self, dx: float, dy: float):
         self.vel_x = dx * self.speed
