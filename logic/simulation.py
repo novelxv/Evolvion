@@ -2,6 +2,8 @@ from core.environment import Environment
 from core.prey import Prey
 from core.predator import Predator
 from logic.evolution import evolve_prey
+from analysis.clustering import cluster_prey_traits
+from analysis.visualization import plot_cluster_centroids
 import random
 
 def run_simulation(config: dict, logger_func, visualization_func):
@@ -48,11 +50,14 @@ def run_simulation(config: dict, logger_func, visualization_func):
 
             env.remove_dead_agents()
 
-            # visualization_func(env, gen, step)
+            visualization_func(env, gen, step)
 
         evolve_prey(env.prey, config)
 
         logger_func(env, gen, config)
+
+        labels, centroids = cluster_prey_traits(env.prey, config["k_clusters"])
+        plot_cluster_centroids(centroids, gen, config)
 
         for p in env.prey:
             p.x = random.uniform(0, config["world_size"][0])

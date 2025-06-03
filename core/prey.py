@@ -30,6 +30,9 @@ class Prey(BaseAgent):
             dy = target_y - self.y
             distance = math.hypot(dx, dy)
 
+            if distance == 0:
+                return
+
             if distance < epsilon:
                 self.x = target_x
                 self.y = target_y

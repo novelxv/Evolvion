@@ -1,6 +1,6 @@
 CONFIG = {
     # General simulation settings
-    "num_generations": 50,
+    "num_generations": 20,
     "num_prey": 20,
     "num_predators": 5,
     "world_size": (800, 600),
